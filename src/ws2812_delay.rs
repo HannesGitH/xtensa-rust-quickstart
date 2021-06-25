@@ -19,18 +19,18 @@ use smart_leds_trait::{SmartLedsWrite, RGB8};
 
 pub struct Ws2812<PIN> {
     pin: PIN,
+    DELAY_CYCLES:u32
 }
 
-const DELAY_CYCLES:u32=4;
 
 impl<PIN> Ws2812<PIN>
 where
     PIN: OutputPin,
 {
     /// The timer has to already run at with a frequency of 3 MHz
-    pub fn new(mut pin: PIN) -> Ws2812<PIN> {
+    pub fn new(mut pin: PIN, DELAY_CYCLES:u32) -> Ws2812<PIN> {
         pin.set_low().ok();
-        Self {pin }
+        Self {pin, DELAY_CYCLES}
     }
 
 
@@ -38,16 +38,16 @@ where
     #[cfg(not(feature = "slow"))]
     fn write_byte(&mut self, mut data: u8) {
         for _ in 0..8 {
-            if (data & 0xF0) != 0 {
+            if (data & 0x80) != 0 {
                 self.pin.set_high().ok();
-                delay(DELAY_CYCLES*14);
+                delay(self.DELAY_CYCLES*2);
                 self.pin.set_low().ok();
-                delay(DELAY_CYCLES*12);
+                delay(self.DELAY_CYCLES);
             } else {
                 self.pin.set_high().ok();
-                delay(DELAY_CYCLES*7);
-                //self.pin.set_low().ok();
-                delay(DELAY_CYCLES*16);
+                delay(self.DELAY_CYCLES);
+                self.pin.set_low().ok();
+                delay(self.DELAY_CYCLES*2);
             }
             data <<= 1;
         }
@@ -86,15 +86,15 @@ where
         T: Iterator<Item = I>,
         I: Into<Self::Color>,
     {
-        for (index, item) in iterator.enumerate() {
+        for item in iterator {
             let item = item.into();
             self.write_byte(item.g);
             self.write_byte(item.r);
             self.write_byte(item.b);
-            //if index%10==0 {delay(DELAY_CYCLES*1100);}
         }
         // Get a timeout period of more than 50 micro s
-        delay(DELAY_CYCLES*1100);
+        delay(self.DELAY_CYCLES*1100);
+        self.DELAY_CYCLES+=1;
         Ok(())
     }
 }

@@ -44,7 +44,7 @@ fn main() -> ! {
 
     let data_pin = pins.gpio12.into_push_pull_output();
 
-    let mut ws = ws2812::Ws2812::new(data_pin);
+    let mut ws = ws2812::Ws2812::new(data_pin,1);
 
     let mut data: [RGB8; 14] = [RGB8::default(); 14];
     let empty: [RGB8; 7] = [RGB8::default(); 7];
@@ -75,12 +75,12 @@ fn main() -> ! {
         ws.write(data.iter().cloned()).unwrap();
         led_extern.set_high().unwrap();
         led.set_low().unwrap();
-        delay(CORE_HZ);
+        delay(CORE_HZ/2);
         //off
         ws.write(empty.iter().cloned()).unwrap();
         led_extern.set_low().unwrap();
         led.set_high().unwrap();
-        delay(CORE_HZ);
+        delay(CORE_HZ/2);
     }
 }
 
