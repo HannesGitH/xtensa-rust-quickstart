@@ -17,7 +17,7 @@ mod ws2812_delay;
 
 /// The default clock source is the onboard crystal
 /// In most cases 40mhz (but can be as low as 2mhz depending on the board)
-const CORE_HZ: u32 = 40_000_000;
+const CORE_HZ: u32 = 80_000_000;
 
 const WDT_WKEY_VALUE: u32 = 0x50D83AA1;
 
@@ -46,16 +46,10 @@ fn main() -> ! {
 
     let mut ws = ws2812::Ws2812::new(data_pin);
 
-    let mut data: [RGB8; 3] = [RGB8::default(); 3];
-    let empty: [RGB8; 3] = [RGB8::default(); 3];
+    let mut data: [RGB8; 14] = [RGB8::default(); 14];
+    let empty: [RGB8; 7] = [RGB8::default(); 7];
 
     loop {
-        led_extern.set_high().unwrap();
-        led.set_low().unwrap();
-        delay(CORE_HZ);
-        led_extern.set_low().unwrap();
-        led.set_high().unwrap();
-        delay(CORE_HZ);
 
         data[0] = RGB8 {
             r: 0,
@@ -64,18 +58,29 @@ fn main() -> ! {
         };
         data[1] = RGB8 {
             r: 0,
-            g: 0x10,
+            g: 0x01,
             b: 0,
         };
         data[2] = RGB8 {
-            r: 0x10,
-            g: 0,
-            b: 0,
+            r: 0xFF,
+            g: 0xFF,
+            b: 0xFF,
         };
+        data[12] = RGB8 {
+            r: 0x10,
+            g: 0x80,
+            b: 0x10,
+        };
+        //on
         ws.write(data.iter().cloned()).unwrap();
-        delay(10000000);
+        led_extern.set_high().unwrap();
+        led.set_low().unwrap();
+        delay(CORE_HZ);
+        //off
         ws.write(empty.iter().cloned()).unwrap();
-        delay(10000000);
+        led_extern.set_low().unwrap();
+        led.set_high().unwrap();
+        delay(CORE_HZ);
     }
 }
 

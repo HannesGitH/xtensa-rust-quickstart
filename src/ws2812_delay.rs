@@ -21,7 +21,7 @@ pub struct Ws2812<PIN> {
     pin: PIN,
 }
 
-const DELAY_CYCLES:u32=13;
+const DELAY_CYCLES:u32=4;
 
 impl<PIN> Ws2812<PIN>
 where
@@ -33,6 +33,27 @@ where
         Self {pin }
     }
 
+
+    /// Write a single color for ws2812 devices
+    #[cfg(not(feature = "slow"))]
+    fn write_byte(&mut self, mut data: u8) {
+        for _ in 0..8 {
+            if (data & 0xF0) != 0 {
+                self.pin.set_high().ok();
+                delay(DELAY_CYCLES*14);
+                self.pin.set_low().ok();
+                delay(DELAY_CYCLES*12);
+            } else {
+                self.pin.set_high().ok();
+                delay(DELAY_CYCLES*7);
+                //self.pin.set_low().ok();
+                delay(DELAY_CYCLES*16);
+            }
+            data <<= 1;
+        }
+    }
+
+    /*
     /// Write a single color for ws2812 devices
     #[cfg(feature = "slow")]
     fn write_byte(&mut self, mut data: u8) {
@@ -50,27 +71,7 @@ where
             }
             data <<= 1;
         }
-    }
-
-    /// Write a single color for ws2812 devices
-    #[cfg(not(feature = "slow"))]
-    fn write_byte(&mut self, mut data: u8) {
-        for _ in 0..8 {
-            if (data & 0x80) != 0 {
-                delay(DELAY_CYCLES);
-                self.pin.set_high().ok();
-                delay(DELAY_CYCLES*2);
-                self.pin.set_low().ok();
-            } else {
-                delay(DELAY_CYCLES);
-                self.pin.set_high().ok();
-                delay(DELAY_CYCLES);
-                self.pin.set_low().ok();
-                delay(DELAY_CYCLES);
-            }
-            data <<= 1;
-        }
-    }
+    }*/
 }
 
 impl<PIN> SmartLedsWrite for Ws2812<PIN>
@@ -85,14 +86,15 @@ where
         T: Iterator<Item = I>,
         I: Into<Self::Color>,
     {
-        for item in iterator {
+        for (index, item) in iterator.enumerate() {
             let item = item.into();
             self.write_byte(item.g);
             self.write_byte(item.r);
             self.write_byte(item.b);
+            //if index%10==0 {delay(DELAY_CYCLES*1100);}
         }
-        // Get a timeout period of 300 ns
-        delay(DELAY_CYCLES*900);
+        // Get a timeout period of more than 50 micro s
+        delay(DELAY_CYCLES*1100);
         Ok(())
     }
 }
