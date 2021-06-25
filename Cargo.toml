@@ -11,6 +11,7 @@ panic-halt = "0.2.0"
 
 ws2812-timer-delay = "0.3.0"
 smart-leds = "0.3.0"
+smart-leds-trait = "0.2.0"
 
 
 # because we cant have optional dev-deps, these must go here

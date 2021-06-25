@@ -8,22 +8,20 @@
 //! If it's too slow (e.g.  e.g. all/some leds are white or display the wrong color)
 //! you may want to try the `slow` feature.
 
-#![no_std]
+//#![no_std]
 
-use embedded_hal as hal;
+use esp32_hal::hal as hal;
 
-use crate::hal::digital::v2::OutputPin;
+use hal::digital::v2::OutputPin;
 use xtensa_lx::timer::delay;
 use smart_leds_trait::{SmartLedsWrite, RGB8};
 
-use nb;
-use nb::block;
 
 pub struct Ws2812<PIN> {
     pin: PIN,
 }
 
-let delay_cycles=1;
+const DELAY_CYCLES:u32=13;
 
 impl<PIN> Ws2812<PIN>
 where
@@ -40,15 +38,15 @@ where
     fn write_byte(&mut self, mut data: u8) {
         for _ in 0..8 {
             if (data & 0x80) != 0 {
-                delay(delay_cycles);
+                delay(DELAY_CYCLES);
                 self.pin.set_high().ok();
-                delay(delay_cycles*2);
+                delay(DELAY_CYCLES*2);
                 self.pin.set_low().ok();
             } else {
-                delay(delay_cycles);
+                delay(DELAY_CYCLES);
                 self.pin.set_high().ok();
                 self.pin.set_low().ok();
-                delay(delay_cycles*2);
+                delay(DELAY_CYCLES*2);
             }
             data <<= 1;
         }
@@ -59,16 +57,16 @@ where
     fn write_byte(&mut self, mut data: u8) {
         for _ in 0..8 {
             if (data & 0x80) != 0 {
-                delay(delay_cycles);
+                delay(DELAY_CYCLES);
                 self.pin.set_high().ok();
-                delay(delay_cycles*2);
+                delay(DELAY_CYCLES*2);
                 self.pin.set_low().ok();
             } else {
-                delay(delay_cycles);
+                delay(DELAY_CYCLES);
                 self.pin.set_high().ok();
-                delay(delay_cycles);
+                delay(DELAY_CYCLES);
                 self.pin.set_low().ok();
-                delay(delay_cycles);
+                delay(DELAY_CYCLES);
             }
             data <<= 1;
         }
@@ -94,7 +92,7 @@ where
             self.write_byte(item.b);
         }
         // Get a timeout period of 300 ns
-        delay(delay_cycles*900);
+        delay(DELAY_CYCLES*900);
         Ok(())
     }
 }

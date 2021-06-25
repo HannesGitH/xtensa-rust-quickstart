@@ -6,9 +6,14 @@ use hal::prelude::*;
 use xtensa_lx::timer::delay;
 use panic_halt as _;
 use esp32_hal as hal;
-use ws2812_timer_delay as ws2812;
 
-use crate::target::{TIMG0, TIMG1};
+use smart_leds::{SmartLedsWrite, RGB8};
+use ws2812_delay as ws2812;
+
+//use crate::target::{TIMG0, TIMG1};
+
+mod ws2812_delay;
+
 
 /// The default clock source is the onboard crystal
 /// In most cases 40mhz (but can be as low as 2mhz depending on the board)
@@ -17,16 +22,6 @@ const CORE_HZ: u32 = 40_000_000;
 const WDT_WKEY_VALUE: u32 = 0x50D83AA1;
 
 
-impl CountDown for TIMG0{
-    type Time;
-    fn start<T>(&mut self, count: T)
-    where
-        T: Into<Self::Time>
-        {
-            self.
-        }
-    fn wait(&mut self) -> Result<(), !>;
-}
 
 #[entry]
 fn main() -> ! {
@@ -47,9 +42,12 @@ fn main() -> ! {
     
     let mut led_extern = pins.gpio13.into_push_pull_output();
 
-    let mut data_pin = pins.gpio12.into_push_pull_output();
+    let data_pin = pins.gpio12.into_push_pull_output();
 
-    let mut ws = ws2812::Ws2812::new(embedded_hal, data_pin);
+    let mut ws = ws2812::Ws2812::new(data_pin);
+
+    let mut data: [RGB8; 3] = [RGB8::default(); 3];
+    let empty: [RGB8; 3] = [RGB8::default(); 3];
 
     loop {
         led_extern.set_high().unwrap();
@@ -58,8 +56,52 @@ fn main() -> ! {
         led_extern.set_low().unwrap();
         led.set_high().unwrap();
         delay(CORE_HZ);
+
+        data[0] = RGB8 {
+            r: 0,
+            g: 0,
+            b: 0x10,
+        };
+        data[1] = RGB8 {
+            r: 0,
+            g: 0x10,
+            b: 0,
+        };
+        data[2] = RGB8 {
+            r: 0x10,
+            g: 0,
+            b: 0,
+        };
+        ws.write(data.iter().cloned()).unwrap();
+        delay(10000000);
+        ws.write(empty.iter().cloned()).unwrap();
+        delay(10000000);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 fn disable_rtc_wdt(rtccntl: &mut target::RTCCNTL) {
     /* Disables the RTCWDT */
